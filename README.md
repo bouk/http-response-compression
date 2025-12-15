@@ -1,5 +1,10 @@
 # http-response-compression
 
+[![Build status](https://github.com/bouk/http-response-compression/workflows/Test/badge.svg)](https://github.com/bouk/http-response-compression/actions)
+[![Crates.io](https://img.shields.io/crates/v/http-response-compression)](https://crates.io/crates/http-response-compression)
+[![Documentation](https://docs.rs/http-response-compression/badge.svg)](https://docs.rs/http-response-compression)
+[![License](https://img.shields.io/crates/l/http-response-compression)](LICENSE)
+
 A Tower middleware layer for compressing HTTP response bodies.
 
 ## Features
