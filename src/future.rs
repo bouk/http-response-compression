@@ -174,6 +174,7 @@ fn is_below_min_size(headers: &header::HeaderMap, min_size: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)]
     use crate::body::CompressState;
 
     fn make_response(body: &'static str) -> Response<&'static str> {
@@ -194,6 +195,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_when_accept_encoding_present() {
         let response = make_response("hello world");
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -229,6 +231,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_when_content_encoding_present() {
         let response =
             make_response_with_headers("hello world", [("content-encoding", "identity")]);
@@ -242,6 +245,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_image_png() {
         let response = make_response_with_headers("PNG data", [("content-type", "image/png")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -254,6 +258,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_image_jpeg() {
         let response = make_response_with_headers("JPEG data", [("content-type", "image/jpeg")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -266,6 +271,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_image_gif() {
         let response = make_response_with_headers("GIF data", [("content-type", "image/gif")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -278,6 +284,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_image_webp() {
         let response = make_response_with_headers("WebP data", [("content-type", "image/webp")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -290,6 +297,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_image_svg() {
         let response =
             make_response_with_headers("<svg></svg>", [("content-type", "image/svg+xml")]);
@@ -303,6 +311,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_image_svg_with_charset() {
         let response = make_response_with_headers(
             "<svg></svg>",
@@ -318,6 +327,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_text_html() {
         let response = make_response_with_headers("<html></html>", [("content-type", "text/html")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -330,6 +340,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_below_min_size() {
         let response = make_response_with_headers("small", [("content-length", "5")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 100);
@@ -342,6 +353,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_above_min_size() {
         let response =
             make_response_with_headers("large enough content", [("content-length", "200")]);
@@ -358,6 +370,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_unknown_size() {
         // No Content-Length header means unknown size, should compress
         let response = make_response("unknown size content");
@@ -371,6 +384,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_always_flush_when_x_accel_buffering_no() {
         let response = make_response_with_headers("streaming data", [("x-accel-buffering", "no")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -384,6 +398,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_always_flush_by_default() {
         let response = make_response("normal data");
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -397,6 +412,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_x_accel_buffering_case_insensitive() {
         let response = make_response_with_headers("streaming data", [("x-accel-buffering", "NO")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -410,6 +426,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "brotli")]
     fn test_brotli_content_encoding() {
         let response = make_response("hello world");
         let wrapped = wrap_response(response, Some(Codec::Brotli), 0);
@@ -421,6 +438,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "zstd")]
     fn test_zstd_content_encoding() {
         let response = make_response("hello world");
         let wrapped = wrap_response(response, Some(Codec::Zstd), 0);
@@ -432,6 +450,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_application_grpc() {
         let response =
             make_response_with_headers("grpc data", [("content-type", "application/grpc")]);
@@ -445,6 +464,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_application_grpc_with_suffix() {
         let response =
             make_response_with_headers("grpc data", [("content-type", "application/grpc+proto")]);
@@ -458,6 +478,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_application_grpc_web() {
         let response =
             make_response_with_headers("grpc-web data", [("content-type", "application/grpc-web")]);
@@ -472,6 +493,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compress_application_grpc_web_proto() {
         let response = make_response_with_headers(
             "grpc-web data",
@@ -488,6 +510,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_always_flush_text_event_stream() {
         let response =
             make_response_with_headers("event: data\n\n", [("content-type", "text/event-stream")]);
@@ -502,6 +525,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_always_flush_text_event_stream_with_charset() {
         let response = make_response_with_headers(
             "event: data\n\n",
@@ -518,6 +542,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_no_compress_range_response() {
         let response =
             make_response_with_headers("partial content", [("content-range", "bytes 0-99/200")]);
@@ -531,6 +556,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_vary_header_added() {
         let response = make_response("hello world");
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -542,6 +568,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_vary_header_appended() {
         let response = make_response_with_headers("hello world", [("vary", "origin")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -557,6 +584,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_vary_header_not_duplicated() {
         let response = make_response_with_headers("hello world", [("vary", "accept-encoding")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -568,6 +596,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_vary_header_star_not_modified() {
         let response = make_response_with_headers("hello world", [("vary", "*")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
@@ -576,6 +605,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_accept_ranges_removed() {
         let response = make_response_with_headers("hello world", [("accept-ranges", "bytes")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);

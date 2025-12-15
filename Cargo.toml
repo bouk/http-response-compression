@@ -6,9 +6,16 @@ license = "MIT"
 description = "Tower middleware for compressing HTTP response bodies"
 repository = "https://github.com/bouk/http-response-compression"
 
+[features]
+default = ["zstd", "gzip", "deflate"]
+zstd = ["compression-codecs/zstd"]
+brotli = ["compression-codecs/brotli"]
+gzip = ["compression-codecs/gzip"]
+deflate = ["compression-codecs/deflate"]
+
 [dependencies]
 bytes = "1"
-compression-codecs = { version = "0.4", features = ["gzip", "brotli", "zstd", "deflate"] }
+compression-codecs = { version = "0.4", default-features = false }
 compression-core = "0.4"
 http = "1"
 http-body = "1"
