@@ -1,6 +1,6 @@
 use compression_codecs::EncodeV2;
 #[cfg(feature = "brotli")]
-use compression_codecs::brotli::{params::EncoderParams as BrotliParams, BrotliEncoder};
+use compression_codecs::brotli::{BrotliEncoder, params::EncoderParams as BrotliParams};
 #[cfg(feature = "deflate")]
 use compression_codecs::deflate::DeflateEncoder;
 #[cfg(feature = "gzip")]
@@ -172,10 +172,7 @@ mod tests {
         #[cfg(feature = "gzip")]
         assert_eq!(Codec::from_accept_encoding("gzip"), Some(Codec::Gzip));
         #[cfg(feature = "deflate")]
-        assert_eq!(
-            Codec::from_accept_encoding("deflate"),
-            Some(Codec::Deflate)
-        );
+        assert_eq!(Codec::from_accept_encoding("deflate"), Some(Codec::Deflate));
     }
 
     #[test]
