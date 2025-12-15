@@ -153,7 +153,9 @@ fn is_streaming_content_type(headers: &header::HeaderMap) -> bool {
     headers
         .get(header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
-        .is_some_and(|ct| ct.starts_with("text/event-stream") || ct.starts_with("application/grpc-web"))
+        .is_some_and(|ct| {
+            ct.starts_with("text/event-stream") || ct.starts_with("application/grpc-web")
+        })
 }
 
 /// Checks if Content-Length is below the minimum size.
