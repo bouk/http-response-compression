@@ -8,10 +8,10 @@ repository = "https://github.com/bouk/http-response-compression"
 
 [dependencies]
 bytes = "1"
-compression-codecs = { version = "0.4.35", features = ["gzip", "brotli", "zstd"] }
+compression-codecs = { version = "0.4", features = ["gzip", "brotli", "zstd"] }
 compression-core = "0.4"
-http = "1.4.0"
-http-body = "1.0.1"
-http-body-util = "0.1.3"
+http = "1"
+http-body = "1"
+http-body-util = "0.1"
 pin-project-lite = "0.2"
-tower = { version = "0.5.2", features = ["util"] }
+tower = { version = "0.5", features = ["util"] }
