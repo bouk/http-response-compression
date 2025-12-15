@@ -39,6 +39,14 @@
 
 #![deny(missing_docs)]
 
+#[cfg(not(any(
+    feature = "zstd",
+    feature = "brotli",
+    feature = "gzip",
+    feature = "deflate"
+)))]
+compile_error!("At least one compression codec feature must be enabled");
+
 mod body;
 mod codec;
 mod future;

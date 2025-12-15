@@ -386,6 +386,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compressed_produces_output() {
         let inner = TestBody::new(vec![Frame::data(Bytes::from("hello world"))]);
         let mut body = CompressionBody::compressed(inner, Codec::Gzip, false);
@@ -404,6 +405,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gzip")]
     fn test_compressed_with_trailers() {
         let mut trailers = HeaderMap::new();
         trailers.insert("x-checksum", "abc123".parse().unwrap());
