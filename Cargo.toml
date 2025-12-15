@@ -3,6 +3,8 @@ name = "http-response-compression"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "Tower middleware for compressing HTTP response bodies"
+repository = "https://github.com/bouk/http-response-compression"
 
 [dependencies]
 bytes = "1"
