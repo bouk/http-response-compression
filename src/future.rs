@@ -55,22 +55,21 @@ fn wrap_response<B>(
     let (mut parts, body) = response.into_parts();
 
     // Determine if we should compress
-    let should_compress = accepted_codec.is_some()
-        && !has_content_encoding(&parts.headers)
-        && !has_content_range(&parts.headers)
-        && !is_uncompressible_content_type(&parts.headers)
-        && !is_below_min_size(&parts.headers, min_size);
+    let dominated_codec = accepted_codec.filter(|_| {
+        !has_content_encoding(&parts.headers)
+            && !has_content_range(&parts.headers)
+            && !is_uncompressible_content_type(&parts.headers)
+            && !is_below_min_size(&parts.headers, min_size)
+    });
 
-    // Check for x-accel-buffering: no header or streaming content types
-    let always_flush = parts
-        .headers
-        .get("x-accel-buffering")
-        .and_then(|v| v.to_str().ok())
-        .is_some_and(|v| v.eq_ignore_ascii_case("no"))
-        || is_streaming_content_type(&parts.headers);
-
-    let body = if should_compress {
-        let codec = accepted_codec.unwrap();
+    let body = if let Some(codec) = dominated_codec {
+        // Check for x-accel-buffering: no header or streaming content types
+        let always_flush = parts
+            .headers
+            .get("x-accel-buffering")
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(|v| v.eq_ignore_ascii_case("no"))
+            || is_streaming_content_type(&parts.headers);
 
         // Add Content-Encoding header
         parts.headers.insert(
@@ -136,16 +135,14 @@ fn is_uncompressible_content_type(headers: &header::HeaderMap) -> bool {
         return false;
     };
 
-    let ct = content_type.to_ascii_lowercase();
-
     // Skip all images except SVG
-    if ct.starts_with("image/") {
-        return !ct.starts_with("image/svg+xml");
+    if content_type.starts_with("image/") {
+        return !content_type.starts_with("image/svg+xml");
     }
 
     // Skip gRPC except grpc-web
-    if ct.starts_with("application/grpc") {
-        return !ct.starts_with("application/grpc-web");
+    if content_type.starts_with("application/grpc") {
+        return !content_type.starts_with("application/grpc-web");
     }
 
     false
@@ -156,8 +153,7 @@ fn is_streaming_content_type(headers: &header::HeaderMap) -> bool {
     headers
         .get(header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
-        .is_some_and(|content_type| {
-            let ct = content_type.to_ascii_lowercase();
+        .is_some_and(|ct| {
             ct.starts_with("text/event-stream") || ct.starts_with("application/grpc-web")
         })
 }

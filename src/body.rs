@@ -150,15 +150,20 @@ impl CompressedBody {
                             return Poll::Ready(Some(Err(io::Error::other(e.into()))));
                         }
                         Poll::Ready(Some(Ok(frame))) => {
-                            if let Some(data) = frame.data_ref() {
-                                // Compress the data
-                                let input_bytes = collect_bytes(data);
-                                return self.compress_chunk(&input_bytes);
-                            } else if let Ok(trailers) = frame.into_trailers() {
-                                // Buffer trailers and finish compression first
-                                self.pending_trailers = Some(trailers);
-                                self.state = CompressState::Finishing;
-                                continue;
+                            match frame.into_data() {
+                                Ok(mut data) => {
+                                    // Compress the data
+                                    let input_bytes = data.copy_to_bytes(data.remaining());
+                                    return self.compress_chunk(&input_bytes);
+                                }
+                                Err(frame) => {
+                                    if let Ok(trailers) = frame.into_trailers() {
+                                        // Buffer trailers and finish compression first
+                                        self.pending_trailers = Some(trailers);
+                                        self.state = CompressState::Finishing;
+                                        continue;
+                                    }
+                                }
                             }
                         }
                     }
@@ -262,16 +267,7 @@ where
                     Poll::Pending => Poll::Pending,
                     Poll::Ready(None) => Poll::Ready(None),
                     Poll::Ready(Some(Ok(frame))) => {
-                        let frame = frame.map_data(|data| {
-                            let mut bytes = BytesMut::with_capacity(data.remaining());
-                            let mut chunk = data;
-                            while chunk.has_remaining() {
-                                let slice = chunk.chunk();
-                                bytes.extend_from_slice(slice);
-                                chunk.advance(slice.len());
-                            }
-                            bytes.freeze()
-                        });
+                        let frame = frame.map_data(|mut data| data.copy_to_bytes(data.remaining()));
                         Poll::Ready(Some(Ok(frame)))
                     }
                     Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(io::Error::other(e.into())))),
@@ -295,15 +291,6 @@ where
             CompressionBody::Compressed { .. } => http_body::SizeHint::default(),
         }
     }
-}
-
-fn collect_bytes<D: Buf>(data: &D) -> Vec<u8> {
-    let mut bytes = Vec::with_capacity(data.remaining());
-    let chunk = data.chunk();
-    let remaining = data.remaining();
-    let len = chunk.len().min(remaining);
-    bytes.extend_from_slice(&chunk[..len]);
-    bytes
 }
 
 #[cfg(test)]
