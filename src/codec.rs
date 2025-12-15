@@ -47,7 +47,7 @@ impl Codec {
     pub fn encoder(&self) -> Box<dyn EncodeV2 + Send> {
         match self {
             #[cfg(feature = "zstd")]
-            Codec::Zstd => Box::new(ZstdEncoder::new(3)), // level 3 is a good default
+            Codec::Zstd => Box::new(ZstdEncoder::new(3)),
             #[cfg(feature = "brotli")]
             Codec::Brotli => Box::new(BrotliEncoder::new(BrotliParams::default())),
             #[cfg(feature = "gzip")]
@@ -98,9 +98,9 @@ impl Codec {
                     Some((_, best_quality)) if quality > *best_quality => {
                         best_codec = Some((codec, quality));
                     }
-                    Some((_, best_quality)) if quality == *best_quality => {
+                    Some((best, best_quality)) if quality == *best_quality => {
                         // Prefer zstd > brotli > gzip > deflate when quality is equal
-                        if priority(&codec) < priority(&best_codec.as_ref().unwrap().0) {
+                        if codec.priority() < best.priority() {
                             best_codec = Some((codec, quality));
                         }
                     }
@@ -111,19 +111,19 @@ impl Codec {
 
         best_codec.map(|(codec, _)| codec)
     }
-}
 
-/// Returns the priority of a codec (lower is better).
-fn priority(c: &Codec) -> u8 {
-    match c {
-        #[cfg(feature = "zstd")]
-        Codec::Zstd => 0,
-        #[cfg(feature = "brotli")]
-        Codec::Brotli => 1,
-        #[cfg(feature = "gzip")]
-        Codec::Gzip => 2,
-        #[cfg(feature = "deflate")]
-        Codec::Deflate => 3,
+    /// Returns the priority of this codec (lower is better).
+    fn priority(&self) -> u8 {
+        match self {
+            #[cfg(feature = "zstd")]
+            Codec::Zstd => 0,
+            #[cfg(feature = "brotli")]
+            Codec::Brotli => 1,
+            #[cfg(feature = "gzip")]
+            Codec::Gzip => 2,
+            #[cfg(feature = "deflate")]
+            Codec::Deflate => 3,
+        }
     }
 }
 
