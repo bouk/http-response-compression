@@ -8,7 +8,7 @@ repository = "https://github.com/bouk/http-response-compression"
 
 [dependencies]
 bytes = "1"
-compression-codecs = { version = "0.4", features = ["gzip", "brotli", "zstd"] }
+compression-codecs = { version = "0.4", features = ["gzip", "brotli", "zstd", "deflate"] }
 compression-core = "0.4"
 http = "1"
 http-body = "1"

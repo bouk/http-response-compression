@@ -1,6 +1,7 @@
 use compression_codecs::{
     EncodeV2,
     brotli::{BrotliEncoder, params::EncoderParams as BrotliParams},
+    deflate::DeflateEncoder,
     gzip::GzipEncoder,
     zstd::ZstdEncoder,
 };
@@ -9,27 +10,34 @@ use compression_core::Level;
 /// Supported compression codecs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Codec {
-    Gzip,
-    Brotli,
+    /// Zstd compression.
     Zstd,
+    /// Brotli compression.
+    Brotli,
+    /// Gzip compression.
+    Gzip,
+    /// Deflate compression.
+    Deflate,
 }
 
 impl Codec {
     /// Returns the Content-Encoding header value for this codec.
     pub fn content_encoding(&self) -> &'static str {
         match self {
-            Codec::Gzip => "gzip",
-            Codec::Brotli => "br",
             Codec::Zstd => "zstd",
+            Codec::Brotli => "br",
+            Codec::Gzip => "gzip",
+            Codec::Deflate => "deflate",
         }
     }
 
     /// Creates a new encoder for this codec.
     pub fn encoder(&self) -> Box<dyn EncodeV2 + Send> {
         match self {
-            Codec::Gzip => Box::new(GzipEncoder::new(Level::Default.into())),
-            Codec::Brotli => Box::new(BrotliEncoder::new(BrotliParams::default())),
             Codec::Zstd => Box::new(ZstdEncoder::new(3)), // level 3 is a good default
+            Codec::Brotli => Box::new(BrotliEncoder::new(BrotliParams::default())),
+            Codec::Gzip => Box::new(GzipEncoder::new(Level::Default.into())),
+            Codec::Deflate => Box::new(DeflateEncoder::new(Level::Default.into())),
         }
     }
 
@@ -50,9 +58,10 @@ impl Codec {
             }
 
             let codec = match encoding {
+                "zstd" => Some(Codec::Zstd),
                 "br" | "brotli" => Some(Codec::Brotli),
                 "gzip" | "x-gzip" => Some(Codec::Gzip),
-                "zstd" => Some(Codec::Zstd),
+                "deflate" => Some(Codec::Deflate),
                 _ => None,
             };
 
@@ -63,11 +72,12 @@ impl Codec {
                         best_codec = Some((codec, quality));
                     }
                     Some((_, best_quality)) if quality == *best_quality => {
-                        // Prefer brotli > zstd > gzip when quality is equal
+                        // Prefer zstd > brotli > gzip > deflate when quality is equal
                         let priority = |c: &Codec| match c {
-                            Codec::Brotli => 0,
-                            Codec::Zstd => 1,
+                            Codec::Zstd => 0,
+                            Codec::Brotli => 1,
                             Codec::Gzip => 2,
+                            Codec::Deflate => 3,
                         };
                         if priority(&codec) < priority(&best_codec.as_ref().unwrap().0) {
                             best_codec = Some((codec, quality));
@@ -108,24 +118,26 @@ mod tests {
 
     #[test]
     fn test_content_encoding() {
-        assert_eq!(Codec::Gzip.content_encoding(), "gzip");
-        assert_eq!(Codec::Brotli.content_encoding(), "br");
         assert_eq!(Codec::Zstd.content_encoding(), "zstd");
+        assert_eq!(Codec::Brotli.content_encoding(), "br");
+        assert_eq!(Codec::Gzip.content_encoding(), "gzip");
+        assert_eq!(Codec::Deflate.content_encoding(), "deflate");
     }
 
     #[test]
     fn test_from_accept_encoding_simple() {
-        assert_eq!(Codec::from_accept_encoding("gzip"), Some(Codec::Gzip));
-        assert_eq!(Codec::from_accept_encoding("br"), Some(Codec::Brotli));
         assert_eq!(Codec::from_accept_encoding("zstd"), Some(Codec::Zstd));
+        assert_eq!(Codec::from_accept_encoding("br"), Some(Codec::Brotli));
+        assert_eq!(Codec::from_accept_encoding("gzip"), Some(Codec::Gzip));
+        assert_eq!(Codec::from_accept_encoding("deflate"), Some(Codec::Deflate));
     }
 
     #[test]
     fn test_from_accept_encoding_multiple() {
-        // With equal quality, prefer brotli
+        // With equal quality, prefer zstd
         assert_eq!(
             Codec::from_accept_encoding("gzip, br, zstd"),
-            Some(Codec::Brotli)
+            Some(Codec::Zstd)
         );
     }
 
@@ -143,8 +155,8 @@ mod tests {
 
     #[test]
     fn test_from_accept_encoding_unsupported() {
-        assert_eq!(Codec::from_accept_encoding("deflate"), None);
         assert_eq!(Codec::from_accept_encoding("identity"), None);
+        assert_eq!(Codec::from_accept_encoding("compress"), None);
     }
 
     #[test]

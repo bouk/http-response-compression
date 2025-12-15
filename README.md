@@ -4,7 +4,7 @@ A Tower middleware layer for compressing HTTP response bodies.
 
 ## Features
 
-- Supports Gzip, Brotli, and Zstd compression
+- Supports Zstd, Brotli, Gzip, and Deflate compression
 - Automatic codec selection based on `Accept-Encoding` header
 - Configurable minimum body size threshold (default: 860 bytes)
 - Streaming support with flush control for SSE and gRPC-web

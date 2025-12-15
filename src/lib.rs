@@ -1,7 +1,7 @@
 //! HTTP response compression middleware for Tower.
 //!
 //! This crate provides a Tower layer that automatically compresses HTTP response
-//! bodies using Gzip, Brotli, or Zstd based on the client's `Accept-Encoding` header.
+//! bodies using Zstd, Brotli, Gzip, or Deflate based on the client's `Accept-Encoding` header.
 //!
 //! # Example
 //!
