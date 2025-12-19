@@ -140,11 +140,6 @@ fn is_uncompressible_content_type(headers: &header::HeaderMap) -> bool {
         return !content_type.starts_with("image/svg+xml");
     }
 
-    // Skip gRPC except grpc-web
-    if content_type.starts_with("application/grpc") {
-        return !content_type.starts_with("application/grpc-web");
-    }
-
     false
 }
 
@@ -154,7 +149,7 @@ fn is_streaming_content_type(headers: &header::HeaderMap) -> bool {
         .get(header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
         .is_some_and(|ct| {
-            ct.starts_with("text/event-stream") || ct.starts_with("application/grpc-web")
+            ct.starts_with("text/event-stream") || ct.starts_with("application/grpc")
         })
 }
 
@@ -447,29 +442,33 @@ mod tests {
 
     #[test]
     #[cfg(feature = "gzip")]
-    fn test_no_compress_application_grpc() {
+    fn test_compress_application_grpc() {
         let response =
             make_response_with_headers("grpc data", [("content-type", "application/grpc")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
 
-        // Should be passthrough
+        // Should be compressed with streaming (always_flush)
         match wrapped.body() {
-            crate::body::CompressionBody::Passthrough { .. } => {}
-            _ => panic!("Expected passthrough body for application/grpc"),
+            crate::body::CompressionBody::Compressed { state, .. } => {
+                assert!(state.always_flush());
+            }
+            _ => panic!("Expected compressed body for application/grpc"),
         }
     }
 
     #[test]
     #[cfg(feature = "gzip")]
-    fn test_no_compress_application_grpc_with_suffix() {
+    fn test_compress_application_grpc_with_suffix() {
         let response =
             make_response_with_headers("grpc data", [("content-type", "application/grpc+proto")]);
         let wrapped = wrap_response(response, Some(Codec::Gzip), 0);
 
-        // Should be passthrough (starts_with check)
+        // Should be compressed with streaming (always_flush)
         match wrapped.body() {
-            crate::body::CompressionBody::Passthrough { .. } => {}
-            _ => panic!("Expected passthrough body for application/grpc+proto"),
+            crate::body::CompressionBody::Compressed { state, .. } => {
+                assert!(state.always_flush());
+            }
+            _ => panic!("Expected compressed body for application/grpc+proto"),
         }
     }
 
